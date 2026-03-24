@@ -11,9 +11,12 @@ set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
 set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
 add_subdirectory(external/glfw)
 
-add_executable(${PROJECT_NAME}
-        src/main.cpp
+file(GLOB_RECURSE SOURCES
+        "src/*.cpp"
+        "engine/*.cpp"
 )
+
+add_executable(${PROJECT_NAME} ${SOURCES})
 
 target_link_libraries(${PROJECT_NAME}
         Vulkan::Vulkan

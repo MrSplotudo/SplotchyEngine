@@ -1,8 +1,20 @@
+#pragma once
+#include "first_app.h"
+
+#include <cstdlib>
 #include <iostream>
+#include <stdexcept>
 
 
 int main() {
-    std::cout << "Hello World!" << std::endl;
+    FirstApp app{};
 
-    return 0;
+    try {
+        app.run();
+    } catch (std::exception& e) {
+        std::cerr << e.what() << std::endl;
+        return EXIT_FAILURE;
+    }
+
+    return EXIT_SUCCESS;
 }
