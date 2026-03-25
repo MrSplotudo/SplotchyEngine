@@ -7,7 +7,20 @@
 
 namespace se {
 
-struct PipelineConfigInfo {};
+struct PipelineConfigInfo {
+    VkViewport viewport;
+    VkRect2D scissor;
+    VkPipelineViewportStateCreateInfo viewportInfo;
+    VkPipelineInputAssemblyStateCreateInfo inputAssemblyInfo;
+    VkPipelineRasterizationStateCreateInfo rasterizationInfo;
+    VkPipelineMultisampleStateCreateInfo multisampleInfo;
+    VkPipelineColorBlendAttachmentState colorBlendAttachment;
+    VkPipelineColorBlendStateCreateInfo colorBlendInfo;
+    VkPipelineDepthStencilStateCreateInfo depthStencilInfo;
+    VkPipelineLayout pipelineLayout = nullptr;
+    VkRenderPass renderPass = nullptr;
+    uint32_t subpass = 0;
+};
 
 class SePipeline {
 public:
@@ -16,7 +29,7 @@ public:
         const std::string& vertFilepath,
         const std::string& fragFilepath,
         const PipelineConfigInfo& configInfo);
-    ~SePipeline() {}
+    ~SePipeline();
 
     SePipeline(const SePipeline&) = delete;
     SePipeline& operator=(const SePipeline&) = delete;
@@ -31,7 +44,7 @@ private:
         const std::string& fragFilepath,
         const PipelineConfigInfo& configInfo);
 
-    void createShaderModule(const std::vector<std::string>& code, VkShaderModule* shaderModule);
+    void createShaderModule(const std::vector<char>& code, VkShaderModule* shaderModule);
 
     SeDevice& seDevice;
     VkPipeline graphicsPipeline;
