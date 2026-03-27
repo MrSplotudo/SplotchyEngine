@@ -10,7 +10,6 @@ namespace se {
 struct PipelineConfigInfo {
     VkViewport viewport;
     VkRect2D scissor;
-    VkPipelineViewportStateCreateInfo viewportInfo;
     VkPipelineInputAssemblyStateCreateInfo inputAssemblyInfo;
     VkPipelineRasterizationStateCreateInfo rasterizationInfo;
     VkPipelineMultisampleStateCreateInfo multisampleInfo;
@@ -34,6 +33,7 @@ public:
     SePipeline(const SePipeline&) = delete;
     SePipeline& operator=(const SePipeline&) = delete;
 
+    void bind(VkCommandBuffer commandBuffer);
     static PipelineConfigInfo defaultPipelineConfigInfo(uint32_t width, uint32_t height);
 
 private:

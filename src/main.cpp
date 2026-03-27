@@ -1,4 +1,3 @@
-#pragma once
 #include "first_app.h"
 
 #include <cstdlib>
@@ -7,9 +6,10 @@
 
 
 int main() {
-    FirstApp app{};
+
 
     try {
+        FirstApp app{};
         app.run();
     } catch (std::exception& e) {
         std::cerr << e.what() << std::endl;
