@@ -6,6 +6,7 @@
 
 
 FirstApp::FirstApp() {
+    loadModel();
     createPipelineLayout();
     createPipeline();
     createCommandBuffers();
@@ -22,6 +23,16 @@ void FirstApp::run() {
     }
 
     vkDeviceWaitIdle(seDevice.device());
+}
+
+void FirstApp::loadModel() {
+    std::vector<se::SeModel::Vertex> vertices {
+    {{0.0f, -0.5f}},
+    {{0.5f, 0.5f}},
+    {{-0.5f, 0.5f}}
+    };
+
+    seModel = std::make_unique<se::SeModel>(seDevice, vertices);
 }
 
 void FirstApp::createPipelineLayout() {
@@ -86,7 +97,8 @@ void FirstApp::createCommandBuffers() {
         vkCmdBeginRenderPass(commandBuffers[i], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 
         sePipeline->bind(commandBuffers[i]);
-        vkCmdDraw(commandBuffers[i], 3, 1, 0, 0);
+        seModel->bind(commandBuffers[i]);
+        seModel->draw(commandBuffers[i]);
 
         vkCmdEndRenderPass(commandBuffers[i]);
         if (vkEndCommandBuffer(commandBuffers[i]) != VK_SUCCESS) {

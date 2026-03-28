@@ -4,6 +4,7 @@
 #include "../engine/se_pipeline.h"
 #include "../engine/se_device.h"
 #include "../engine/se_swap_chain.h"
+#include "../engine/se_model.h"
 
 #include <memory>
 #include <vector>
@@ -23,6 +24,7 @@ public:
     void run();
 
 private:
+    void loadModel();
     void createPipelineLayout();
     void createPipeline();
     void createCommandBuffers();
@@ -34,4 +36,5 @@ private:
     std::unique_ptr<se::SePipeline> sePipeline;
     VkPipelineLayout pipelineLayout;
     std::vector<VkCommandBuffer> commandBuffers;
+    std::unique_ptr<se::SeModel> seModel;
 };
