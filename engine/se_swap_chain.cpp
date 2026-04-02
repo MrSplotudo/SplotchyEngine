@@ -11,8 +11,8 @@
 
 namespace se {
 
-SeSwapChain::SeSwapChain(SeDevice &deviceRef, VkExtent2D extent)
-    : device{deviceRef}, windowExtent{extent} {
+SeSwapChain::SeSwapChain(SeDevice &device, VkExtent2D extent)
+    : device{device}, windowExtent{extent} {
   createSwapChain();
   createImageViews();
   createRenderPass();

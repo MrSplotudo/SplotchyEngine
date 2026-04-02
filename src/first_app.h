@@ -12,8 +12,8 @@
 class FirstApp {
 
 public:
-    static constexpr int WIDTH = 600;
-    static constexpr int HEIGHT = 600;
+    static constexpr int WIDTH = 1400;
+    static constexpr int HEIGHT = 1400;
 
     FirstApp();
     ~FirstApp();
@@ -29,6 +29,8 @@ private:
     void createPipeline();
     void createCommandBuffers();
     void drawFrame();
+
+    void sirepinski(std::vector<se::SeModel::Vertex>& vertices, int depth, glm::vec2 top, glm::vec2 right, glm::vec2 left);
 
     se::SeWindow seWindow{WIDTH, HEIGHT, "Splotchy's little window"};
     se::SeDevice seDevice{seWindow};

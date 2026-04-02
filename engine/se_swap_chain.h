@@ -15,7 +15,7 @@ class SeSwapChain {
  public:
   static constexpr int MAX_FRAMES_IN_FLIGHT = 3;
 
-  SeSwapChain(SeDevice &deviceRef, VkExtent2D windowExtent);
+  SeSwapChain(SeDevice &device, VkExtent2D windowExtent);
   ~SeSwapChain();
 
   SeSwapChain(const SeSwapChain &) = delete;
