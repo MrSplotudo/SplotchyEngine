@@ -13,6 +13,7 @@ class SeModel {
 public:
     struct Vertex {
         glm::vec2 position;
+        glm::vec3 color;
 
         static std::vector<VkVertexInputBindingDescription> getBindingDescriptions();
         static std::vector<VkVertexInputAttributeDescription> getAttributeDescriptions();
@@ -22,7 +23,7 @@ public:
     ~SeModel();
 
     SeModel(const SeModel &) = delete;
-    SeModel &operator= (const SeModel &) = delete;
+    SeModel& operator= (const SeModel &) = delete;
 
     void bind(VkCommandBuffer commandBuffer);
     void draw(VkCommandBuffer commandBuffer);

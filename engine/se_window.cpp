@@ -23,9 +23,18 @@ void SeWindow::initWindow() {
     glfwInit();
 
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-    glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
+    glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
 
     window = glfwCreateWindow(width, height, title.c_str(), nullptr, nullptr);
+    glfwSetWindowUserPointer(window, this);
+    glfwSetFramebufferSizeCallback(window, framebufferResizeCallback);
+}
+
+void SeWindow::framebufferResizeCallback(GLFWwindow* window, int width, int height) {
+    auto seWindow = reinterpret_cast<SeWindow*>(glfwGetWindowUserPointer(window));
+    seWindow->framebufferResized = true;
+    seWindow->width = width;
+    seWindow->height = height;
 }
 }
 
