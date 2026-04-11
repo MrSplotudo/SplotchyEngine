@@ -5,6 +5,7 @@
 #include "../engine/se_device.h"
 #include "../engine/se_swap_chain.h"
 #include "../engine/se_model.h"
+#include "../engine/se_game_object.h"
 
 #include <memory>
 #include <vector>
@@ -24,7 +25,7 @@ public:
     void run();
 
 private:
-    void loadModel();
+    void loadGameObjects();
     void createPipelineLayout();
     void createPipeline();
     void createCommandBuffers();
@@ -32,6 +33,7 @@ private:
     void drawFrame();
     void recreateSwapChain();
     void recordCommandBuffer(int imageIndex);
+    void renderGameObjects(VkCommandBuffer commandBuffer);
 
     void sirepinski(std::vector<se::SeModel::Vertex>& vertices, int depth, glm::vec2 top, glm::vec2 right, glm::vec2 left);
 
@@ -41,5 +43,5 @@ private:
     std::unique_ptr<se::SePipeline> sePipeline;
     VkPipelineLayout pipelineLayout;
     std::vector<VkCommandBuffer> commandBuffers;
-    std::unique_ptr<se::SeModel> seModel;
+    std::vector<se::SeGameObject> gameObjects;
 };

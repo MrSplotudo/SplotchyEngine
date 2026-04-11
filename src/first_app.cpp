@@ -11,12 +11,13 @@
 #include <array>
 
 struct SimplePushConstantData {
+    glm::mat2 transform{1.f};
     glm::vec2 offset;
     alignas(16) glm::vec3 color;
 };
 
 FirstApp::FirstApp() {
-    loadModel();
+    loadGameObjects();
     createPipelineLayout();
     recreateSwapChain();
     createCommandBuffers();
@@ -35,14 +36,14 @@ void FirstApp::run() {
     vkDeviceWaitIdle(seDevice.device());
 }
 
-void FirstApp::loadModel() {
+void FirstApp::loadGameObjects() {
     std::vector<se::SeModel::Vertex> vertices {
         {{0.0f, -0.5f}, {1.0f, 0.0f, 0.0f}},
         {{0.5f, 0.5f}, {0.0f, 1.0f, 0.0f}},
         {{-0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}}
     };
 
-    seModel = std::make_unique<se::SeModel>(seDevice, vertices);
+    auto seModel = std::make_shared<se::SeModel>(seDevice, vertices);
 }
 
 void FirstApp::createPipelineLayout() {
@@ -124,7 +125,7 @@ void FirstApp::freeCommandBuffers() {
 
 void FirstApp::recordCommandBuffer(int imageIndex) {
     static int frame = 0;
-    frame = (frame + 1) % 1000;
+    frame = (frame + 1) % 100;
 
     VkCommandBufferBeginInfo beginInfo{};
     beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
