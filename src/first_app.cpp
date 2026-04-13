@@ -1,36 +1,36 @@
 #include "first_app.h"
 
+#include "../engine/simple_render_system.h"
+
 // libs
 #define GLM_FORCE_RADIANS
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
 #include <glm/glm.hpp>
+#include <glm/gtc/constants.hpp>
 
 // std
 #include <stdexcept>
 #include <iostream>
 #include <array>
 
-struct SimplePushConstantData {
-    glm::mat2 transform{1.f};
-    glm::vec2 offset;
-    alignas(16) glm::vec3 color;
-};
-
 FirstApp::FirstApp() {
     loadGameObjects();
-    createPipelineLayout();
-    recreateSwapChain();
-    createCommandBuffers();
 }
 
-FirstApp::~FirstApp() {
-    vkDestroyPipelineLayout(seDevice.device(), pipelineLayout, nullptr);
-}
+FirstApp::~FirstApp() {}
 
 void FirstApp::run() {
+    se::SimpleRenderSystem simpleRenderSystem{seDevice, seRenderer.getSwapChainRenderPass()};
+
     while (!seWindow.shouldClose()) {
         glfwPollEvents();
-        drawFrame();
+
+        if (auto commandBuffer = seRenderer.beginFrame()) {
+            seRenderer.beginSwapChainRenderPass(commandBuffer);
+            simpleRenderSystem.renderGameObjects(commandBuffer, gameObjects);
+            seRenderer.endSwapChainRenderPass(commandBuffer);
+            seRenderer.endFrame();
+        }
     }
 
     vkDeviceWaitIdle(seDevice.device());
@@ -38,186 +38,35 @@ void FirstApp::run() {
 
 void FirstApp::loadGameObjects() {
     std::vector<se::SeModel::Vertex> vertices {
-        {{0.0f, -0.5f}, {1.0f, 0.0f, 0.0f}},
-        {{0.5f, 0.5f}, {0.0f, 1.0f, 0.0f}},
-        {{-0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}}
+        {{0.0f, -0.1f}, {1.0f, 0.0f, 0.0f}},
+        {{0.1f, 0.1f}, {0.0f, 1.0f, 0.0f}},
+        {{-0.1f, 0.1f}, {0.0f, 0.0f, 1.0f}}
     };
 
     auto seModel = std::make_shared<se::SeModel>(seDevice, vertices);
-}
 
-void FirstApp::createPipelineLayout() {
-    VkPushConstantRange pushConstantRange{};
-    pushConstantRange.stageFlags = VK_SHADER_STAGE_VERTEX_BIT  | VK_SHADER_STAGE_FRAGMENT_BIT;
-    pushConstantRange.offset = 0;
-    pushConstantRange.size = sizeof(SimplePushConstantData);
 
-    VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
-    pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-    pipelineLayoutInfo.setLayoutCount = 0;
-    pipelineLayoutInfo.pSetLayouts = nullptr;
-    pipelineLayoutInfo.pushConstantRangeCount = 1;
-    pipelineLayoutInfo.pPushConstantRanges = &pushConstantRange;
-    if (vkCreatePipelineLayout(seDevice.device(), &pipelineLayoutInfo, nullptr, &pipelineLayout) != VK_SUCCESS) {
-        throw std::runtime_error("Failed to create pipeline layout!");
-    }
-}
+    std::vector<glm::vec3> colors {
+        {1.f, .7f, .73f},
+        {1.f, .87f, .73f},
+        {1.f, 1.f, .73f},
+        {.73f, 1.f, .8f},
+        {.73, .88f, 1.f}
+    };
 
-void FirstApp::createPipeline() {
-    assert(seSwapChain != nullptr && "Cannot create pipeline efore swap chain!");
-    assert(pipelineLayout != nullptr && "Cannot create pipeline before pipeline layout!");
-
-    se::PipelineConfigInfo pipelineConfig{};
-    se::SePipeline::defaultPipelineConfigInfo(pipelineConfig);
-    pipelineConfig.renderPass = seSwapChain->getRenderPass();
-    pipelineConfig.pipelineLayout = pipelineLayout;
-    sePipeline = std::make_unique<se::SePipeline>(
-        seDevice,
-        "../shaders/simple_shader.vert.spv",
-        "../shaders/simple_shader.frag.spv",
-        pipelineConfig);
-}
-
-void FirstApp::recreateSwapChain() {
-    auto extent = seWindow.getExtent();
-    while (extent.width == 0 || extent.height == 0) {
-        extent = seWindow.getExtent();
-        glfwWaitEvents();
+    for (auto& color : colors) {
+        color = glm::pow(color, glm::vec3(2.2f));
     }
 
-    vkDeviceWaitIdle(seDevice.device());
+    for (int i = 0; i < 50; i++) {
+        auto triangle = se::SeGameObject::createGameObject();
 
-    if (seSwapChain == nullptr) {
-        seSwapChain = std::make_unique<se::SeSwapChain>(seDevice, extent);
-    } else {
-        seSwapChain = std::make_unique<se::SeSwapChain>(seDevice, extent, std::move(seSwapChain));
-        if (seSwapChain->imageCount() != commandBuffers.size()) {
-            freeCommandBuffers();
-            createCommandBuffers();
-        }
+        triangle.model = seModel;
+        triangle.transform2d.scale = glm::vec2(.5f) + i * 0.05f;
+        triangle.transform2d.rotation = i * glm::pi<float>() * 0.025;
+        triangle.color = colors[i % colors.size()];
+
+        gameObjects.push_back(std::move(triangle));
     }
 
-    createPipeline();
-}
-
-void FirstApp::createCommandBuffers() {
-    commandBuffers.resize(seSwapChain->imageCount());
-
-    VkCommandBufferAllocateInfo allocInfo{};
-    allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-    allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-    allocInfo.commandPool = seDevice.getCommandPool();
-    allocInfo.commandBufferCount = static_cast<uint32_t>(commandBuffers.size());
-
-    if (vkAllocateCommandBuffers(seDevice.device(), &allocInfo, commandBuffers.data()) != VK_SUCCESS) {
-        throw std::runtime_error("Failed to allocate memory to command buffer from command pool!");
-    }
-}
-
-void FirstApp::freeCommandBuffers() {
-    vkFreeCommandBuffers(
-        seDevice.device(),
-        seDevice.getCommandPool(),
-        static_cast<uint32_t>(commandBuffers.size()),
-        commandBuffers.data());
-    commandBuffers.clear();
-}
-
-void FirstApp::recordCommandBuffer(int imageIndex) {
-    static int frame = 0;
-    frame = (frame + 1) % 100;
-
-    VkCommandBufferBeginInfo beginInfo{};
-    beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-
-    if (vkBeginCommandBuffer(commandBuffers[imageIndex], &beginInfo) != VK_SUCCESS) {
-        throw std::runtime_error("Failed to begin command buffer!");
-    }
-
-    // The render pass has the info the pipeline needs about the layout of a frame buffer(ie. width and height)
-    VkRenderPassBeginInfo renderPassInfo{};
-    renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-    renderPassInfo.renderPass = seSwapChain->getRenderPass();
-    renderPassInfo.framebuffer = seSwapChain->getFrameBuffer(imageIndex);
-
-    renderPassInfo.renderArea.offset = {0, 0};
-    renderPassInfo.renderArea.extent = seSwapChain->getSwapChainExtent();
-
-    std::array<VkClearValue, 2> clearValues{};
-    clearValues[0].color = {0.3f, 0.2f, 0.2f, 1.0f};
-    clearValues[1].depthStencil = {1.0f, 0};
-    renderPassInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
-    renderPassInfo.pClearValues = clearValues.data();
-
-    vkCmdBeginRenderPass(commandBuffers[imageIndex], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
-
-    VkViewport viewport{};
-    viewport.x = 0.0f;
-    viewport.y = 0.0f;
-    viewport.width = static_cast<float>(seSwapChain->getSwapChainExtent().width);
-    viewport.height = static_cast<float>(seSwapChain->getSwapChainExtent().height);
-    viewport.minDepth = 0.0f;
-    viewport.maxDepth = 1.0f;
-    VkRect2D scissor{{0, 0}, seSwapChain->getSwapChainExtent()};
-    vkCmdSetViewport(commandBuffers[imageIndex], 0, 1, &viewport);
-    vkCmdSetScissor(commandBuffers[imageIndex], 0, 1, &scissor);
-
-    sePipeline->bind(commandBuffers[imageIndex]);
-    seModel->bind(commandBuffers[imageIndex]);
-
-    for (int j = 0; j < 4; j++) {
-        SimplePushConstantData push{};
-        push.offset = {-0.5f + frame * 0.02f, -0.4f + j * 0.25};
-        push.color = {0.0f, 0.0f, 0.2f + 0.2f * j};
-
-        vkCmdPushConstants(commandBuffers[imageIndex], pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(SimplePushConstantData), &push);
-
-        seModel->draw(commandBuffers[imageIndex]);
-    }
-
-    vkCmdEndRenderPass(commandBuffers[imageIndex]);
-    if (vkEndCommandBuffer(commandBuffers[imageIndex]) != VK_SUCCESS) {
-        throw std::runtime_error("Failed to record command buffer!");
-    }
-}
-
-void FirstApp::drawFrame() {
-    uint32_t imageIndex;
-    auto result = seSwapChain->acquireNextImage(&imageIndex);
-
-    if (result == VK_ERROR_OUT_OF_DATE_KHR) {
-        recreateSwapChain();
-        return;
-    }
-
-    if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) {
-        throw std::runtime_error("Filed to acquire swap chain image!");
-    }
-
-    recordCommandBuffer(imageIndex);
-    result = seSwapChain->submitCommandBuffers(&commandBuffers[imageIndex], &imageIndex);
-    if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || seWindow.wasWindowResized()) {
-        seWindow.resetWindowResizedFlag();
-        recreateSwapChain();
-        return;
-    }
-    if (result != VK_SUCCESS) {
-        throw std::runtime_error("Failed to present swap chain image!");
-    }
-}
-
-void FirstApp::sirepinski(std::vector<se::SeModel::Vertex>& vertices, int depth, glm::vec2 top, glm::vec2 right, glm::vec2 left) {
-    if (depth <= 0) {
-        vertices.push_back({top});
-        vertices.push_back({right});
-        vertices.push_back({left});
-    } else {
-        glm::vec2 leftTop = (left + top) * 0.5f;
-        glm::vec2 rightTop = (right + top) * 0.5f;
-        glm::vec2 leftRight = (left + right) * 0.5f;
-
-        sirepinski(vertices, depth - 1, top, rightTop, leftTop);
-        sirepinski(vertices, depth - 1, rightTop, right, leftRight);
-        sirepinski(vertices, depth - 1, leftTop, leftRight, left);
-    }
 }
