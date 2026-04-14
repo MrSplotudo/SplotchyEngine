@@ -24,7 +24,11 @@ void FirstApp::run() {
 
     while (!seWindow.shouldClose()) {
         glfwPollEvents();
+        float time = static_cast<float>(glfwGetTime());
 
+        // === UPDATE ===
+
+        // === RENDER ===
         if (auto commandBuffer = seRenderer.beginFrame()) {
             seRenderer.beginSwapChainRenderPass(commandBuffer);
             simpleRenderSystem.renderGameObjects(commandBuffer, gameObjects);
@@ -38,33 +42,23 @@ void FirstApp::run() {
 
 void FirstApp::loadGameObjects() {
     std::vector<se::SeModel::Vertex> vertices {
-        {{0.0f, -0.1f}, {1.0f, 0.0f, 0.0f}},
-        {{0.1f, 0.1f}, {0.0f, 1.0f, 0.0f}},
-        {{-0.1f, 0.1f}, {0.0f, 0.0f, 1.0f}}
+        {{-0.15f, -0.15f}, {1.0f, 0.0f, 0.0f}},
+        {{0.15f, -0.15f}, {0.0f, 1.0f, 0.0f}},
+        {{0.15f, 0.15f}, {0.0f, 0.0f, 1.0f}},
+        {{-0.15f, -0.15f}, {1.0f, 0.0f, 0.0f}},
+        {{0.15f, 0.15f}, {0.0f, 1.0f, 0.0f}},
+        {{-0.15f, 0.15f}, {0.0f, 0.0f, 1.0f}}
     };
 
     auto seModel = std::make_shared<se::SeModel>(seDevice, vertices);
 
-
-    std::vector<glm::vec3> colors {
-        {1.f, .7f, .73f},
-        {1.f, .87f, .73f},
-        {1.f, 1.f, .73f},
-        {.73f, 1.f, .8f},
-        {.73, .88f, 1.f}
-    };
-
-    for (auto& color : colors) {
-        color = glm::pow(color, glm::vec3(2.2f));
-    }
-
-    for (int i = 0; i < 50; i++) {
+    for (int i = 0; i < 300; i++) {
         auto triangle = se::SeGameObject::createGameObject();
 
         triangle.model = seModel;
         triangle.transform2d.scale = glm::vec2(.5f) + i * 0.05f;
-        triangle.transform2d.rotation = i * glm::pi<float>() * 0.025;
-        triangle.color = colors[i % colors.size()];
+
+        triangle.color = glm::vec3(0.f + 0.004f * i, 0.f + 0.005f * i, 0.f + 0.005f * i);
 
         gameObjects.push_back(std::move(triangle));
     }
