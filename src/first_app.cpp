@@ -52,13 +52,13 @@ void FirstApp::loadGameObjects() {
 
     auto seModel = std::make_shared<se::SeModel>(seDevice, vertices);
 
-    for (int i = 0; i < 300; i++) {
+    for (int i = 0; i < 3000; i++) {
         auto triangle = se::SeGameObject::createGameObject();
 
         triangle.model = seModel;
-        triangle.transform2d.scale = glm::vec2(.5f) + i * 0.05f;
+        triangle.transform2d.scale = glm::vec2(.5f) + i * 0.005f;
 
-        triangle.color = glm::vec3(0.f + 0.004f * i, 0.f + 0.005f * i, 0.f + 0.005f * i);
+        triangle.color = glm::vec3(0.f + 0.0004f * i, 0.f + 0.0005f * i, 0.f + 0.0005f * i);
 
         gameObjects.push_back(std::move(triangle));
     }

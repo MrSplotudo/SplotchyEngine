@@ -23,13 +23,17 @@ void PongApp::run() {
     se::SimpleRenderSystem simpleRenderSystem{seDevice, seRenderer.getSwapChainRenderPass()};
     bool travelingRight = true;
     bool travelingUp = true;
+    float lastTime = 0.0f;
 
     while (!seWindow.shouldClose()) {
-        glfwPollEvents();
         float time = static_cast<float>(glfwGetTime());
+        float dt = time - lastTime;
+        lastTime = time;
+
+        glfwPollEvents();
 
         // === UPDATE ===
-        float speed = 0.01f;
+        float speed = 1.f * dt;
         auto& leftPlayer{gameObjects[0]};
         if (glfwGetKey(seWindow.getWindow(), GLFW_KEY_W) == GLFW_PRESS) {
             leftPlayer.transform2d.translation.y -= speed;
@@ -65,14 +69,14 @@ void PongApp::run() {
         }
 
         if (travelingRight) {
-            ball.transform2d.translation.x += 0.01f;
+            ball.transform2d.translation.x += speed;
         } else {
-            ball.transform2d.translation.x -= 0.01f;
+            ball.transform2d.translation.x -= speed;
         }
         if (travelingUp) {
-            ball.transform2d.translation.y -= 0.01f;
+            ball.transform2d.translation.y -= speed;
         } else {
-            ball.transform2d.translation.y += 0.01f;
+            ball.transform2d.translation.y += speed;
         }
 
 
