@@ -1,10 +1,13 @@
 #pragma once
+
 #include "se_device.h"
 
+// libs
 #define GLM_FORCE_RADIANS
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
 #include <glm/glm.hpp>
 
+// std
 #include <vector>
 
 namespace se {
@@ -12,7 +15,7 @@ namespace se {
 class SeModel {
 public:
     struct Vertex {
-        glm::vec2 position;
+        glm::vec3 position;
         glm::vec3 color;
 
         static std::vector<VkVertexInputBindingDescription> getBindingDescriptions();

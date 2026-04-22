@@ -1,8 +1,9 @@
 #pragma once
 
-#include "../engine/se_pipeline.h"
-#include "../engine/se_device.h"
-#include "../engine/se_game_object.h"
+#include "se_camera.h"
+#include "se_pipeline.h"
+#include "se_device.h"
+#include "se_game_object.h"
 
 #include <memory>
 #include <vector>
@@ -19,7 +20,7 @@ public:
     SimpleRenderSystem(const SimpleRenderSystem &) = delete;
     SimpleRenderSystem& operator= (const SimpleRenderSystem &) = delete;
 
-    void renderGameObjects(VkCommandBuffer commandBuffer, std::vector<SeGameObject>& gameObjects);
+    void renderGameObjects(VkCommandBuffer commandBuffer, std::vector<SeGameObject>& gameObjects, const SeCamera& camera);
 private:
     void createPipelineLayout();
     void createPipeline(VkRenderPass renderPass);

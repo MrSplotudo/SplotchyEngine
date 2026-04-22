@@ -22,6 +22,7 @@ public:
     SeRenderer& operator=(const SeRenderer&) = delete;
 
     VkRenderPass getSwapChainRenderPass() const { return seSwapChain->getRenderPass(); }
+    float getAspectRatio() const { return seSwapChain->extentAspectRatio(); }
     bool isFrameInProgress() const { return isFrameStarted; }
 
     VkCommandBuffer getCurrentCommandBuffer() const {

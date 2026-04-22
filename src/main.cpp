@@ -1,6 +1,4 @@
 #include "first_app.h"
-#include "pong_app.h"
-#include "asteroids_app.h"
 
 #include <cstdlib>
 #include <iostream>
@@ -11,7 +9,7 @@ int main() {
 
 
     try {
-        AsteroidsApp app{};
+        FirstApp app{};
         app.run();
     } catch (std::exception& e) {
         std::cerr << e.what() << std::endl;
