@@ -14,7 +14,7 @@
 namespace se {
 struct SimplePushConstantData {
     glm::mat4 transform{1.f};
-    alignas(16) glm::vec3 color;
+    glm::mat4 modelMatrix{1.f};
 };
 
 SimpleRenderSystem::SimpleRenderSystem(SeDevice& device, VkRenderPass renderPass) : seDevice{device} {
@@ -60,14 +60,14 @@ void SimpleRenderSystem::createPipeline(VkRenderPass renderPass) {
 void SimpleRenderSystem::renderGameObjects(VkCommandBuffer commandBuffer, std::vector<SeGameObject>& gameObjects, const SeCamera& camera) {
 
     sePipeline->bind(commandBuffer);
-    for (auto& obj: gameObjects) {
-        obj.transform.rotation.y = glm::mod(obj.transform.rotation.y + 0.0045f, glm::two_pi<float>());
-        obj.transform.rotation.x = glm::mod(obj.transform.rotation.x + 0.0099f, glm::two_pi<float>());
-        obj.transform.rotation.z = glm::mod(obj.transform.rotation.z + 0.00366f, glm::two_pi<float>());
 
+    auto projectionView = camera.getProjection() * camera.getView();
+
+    for (auto& obj: gameObjects) {
         SimplePushConstantData push{};
-        push.color = obj.color;
-        push.transform = camera.getProjection() * obj.transform.mat4();
+        auto modelMatrix = obj.transform.mat4();
+        push.transform = projectionView * obj.transform.mat4();
+        push.modelMatrix = modelMatrix;
 
         vkCmdPushConstants(
             commandBuffer,

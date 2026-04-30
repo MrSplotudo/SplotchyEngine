@@ -2,6 +2,7 @@
 
 #include "../engine/se_camera.h"
 #include "../engine/simple_render_system.h"
+#include "../engine/keyboard_movement_controller.h"
 
 // libs
 #define GLM_FORCE_RADIANS
@@ -10,9 +11,11 @@
 #include <glm/gtc/constants.hpp>
 
 // std
-#include <stdexcept>
-#include <iostream>
 #include <array>
+#include <chrono>
+#include <cassert>
+#include <iostream>
+#include <stdexcept>
 
 FirstApp::FirstApp() {
     loadGameObjects();
@@ -23,14 +26,29 @@ FirstApp::~FirstApp() {}
 void FirstApp::run() {
     se::SimpleRenderSystem simpleRenderSystem{seDevice, seRenderer.getSwapChainRenderPass()};
     se::SeCamera camera{};
+    camera.setViewTarget(glm::vec3(-1.f, -2.f, 2.f), glm::vec3(0.f, 0.f, 2.5f));
 
+    glfwSetInputMode(seWindow.getWindow(), GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+    auto viewerObject = se::SeGameObject::createGameObject();
+
+    se::KeyboardMovementController cameraController{};
+
+    auto lastTime = std::chrono::high_resolution_clock::now();
 
     while (!seWindow.shouldClose()) {
         glfwPollEvents();
+        auto currentTime = std::chrono::high_resolution_clock::now();
+        float dt = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - lastTime).count();
+        lastTime = currentTime;
 
+        cameraController.moveInPlaneXZ(seWindow.getWindow(), dt, viewerObject);
+        camera.setViewYXZ(viewerObject.transform.translation, viewerObject.transform.rotation);
         float aspect = seRenderer.getAspectRatio();
-        //camera.setOrthographicProjection(-aspect, aspect, -1, 1, -1, 1);
         camera.setPerspectiveProjection(glm::radians(50.f), aspect, .1f, 10.f);
+
+        if (glfwGetKey(seWindow.getWindow(), GLFW_KEY_ESCAPE) == GLFW_PRESS) {
+            glfwSetWindowShouldClose(seWindow.getWindow(), true);
+        }
 
         // === UPDATE ===
 
@@ -46,72 +64,22 @@ void FirstApp::run() {
     vkDeviceWaitIdle(seDevice.device());
 }
 
-// temporary helper function, creates a 1x1x1 cube centered at offset
-std::unique_ptr<se::SeModel> createCubeModel(se::SeDevice& device, glm::vec3 offset) {
-    std::vector<se::SeModel::Vertex> vertices{
-
-        // left face (white)
-        {{-.5f, -.5f, -.5f}, {.9f, .9f, .9f}},
-        {{-.5f, .5f, .5f}, {.9f, .9f, .9f}},
-        {{-.5f, -.5f, .5f}, {.9f, .9f, .9f}},
-        {{-.5f, -.5f, -.5f}, {.9f, .9f, .9f}},
-        {{-.5f, .5f, -.5f}, {.9f, .9f, .9f}},
-        {{-.5f, .5f, .5f}, {.9f, .9f, .9f}},
-
-        // right face (yellow)
-        {{.5f, -.5f, -.5f}, {.8f, .8f, .1f}},
-        {{.5f, .5f, .5f}, {.8f, .8f, .1f}},
-        {{.5f, -.5f, .5f}, {.8f, .8f, .1f}},
-        {{.5f, -.5f, -.5f}, {.8f, .8f, .1f}},
-        {{.5f, .5f, -.5f}, {.8f, .8f, .1f}},
-        {{.5f, .5f, .5f}, {.8f, .8f, .1f}},
-
-        // top face (orange, remember y axis points down)
-        {{-.5f, -.5f, -.5f}, {.9f, .6f, .1f}},
-        {{.5f, -.5f, .5f}, {.9f, .6f, .1f}},
-        {{-.5f, -.5f, .5f}, {.9f, .6f, .1f}},
-        {{-.5f, -.5f, -.5f}, {.9f, .6f, .1f}},
-        {{.5f, -.5f, -.5f}, {.9f, .6f, .1f}},
-        {{.5f, -.5f, .5f}, {.9f, .6f, .1f}},
-
-        // bottom face (red)
-        {{-.5f, .5f, -.5f}, {.8f, .1f, .1f}},
-        {{.5f, .5f, .5f}, {.8f, .1f, .1f}},
-        {{-.5f, .5f, .5f}, {.8f, .1f, .1f}},
-        {{-.5f, .5f, -.5f}, {.8f, .1f, .1f}},
-        {{.5f, .5f, -.5f}, {.8f, .1f, .1f}},
-        {{.5f, .5f, .5f}, {.8f, .1f, .1f}},
-
-        // nose face (blue)
-        {{-.5f, -.5f, 0.5f}, {.1f, .1f, .8f}},
-        {{.5f, .5f, 0.5f}, {.1f, .1f, .8f}},
-        {{-.5f, .5f, 0.5f}, {.1f, .1f, .8f}},
-        {{-.5f, -.5f, 0.5f}, {.1f, .1f, .8f}},
-        {{.5f, -.5f, 0.5f}, {.1f, .1f, .8f}},
-        {{.5f, .5f, 0.5f}, {.1f, .1f, .8f}},
-
-        // tail face (green)
-        {{-.5f, -.5f, -0.5f}, {.1f, .8f, .1f}},
-        {{.5f, .5f, -0.5f}, {.1f, .8f, .1f}},
-        {{-.5f, .5f, -0.5f}, {.1f, .8f, .1f}},
-        {{-.5f, -.5f, -0.5f}, {.1f, .8f, .1f}},
-        {{.5f, -.5f, -0.5f}, {.1f, .8f, .1f}},
-        {{.5f, .5f, -0.5f}, {.1f, .8f, .1f}},
-
-    };
-    for (auto& v : vertices) {
-        v.position += offset;
-    }
-    return std::make_unique<se::SeModel>(device, vertices);
-}
-
 void FirstApp::loadGameObjects() {
-    std::shared_ptr<se::SeModel> seModel = createCubeModel(seDevice, {.0f, 0.f, 0.f});
+    std::shared_ptr<se::SeModel> seModel = se::SeModel::createModelFromFile(seDevice, "../assets/models/smooth_ball.obj");
 
-    auto cube = se::SeGameObject::createGameObject();
-    cube.model = seModel;
-    cube.transform.translation = {.0f, .0f, 2.5f};
-    cube.transform.scale = {.5f, .5f, .5f};
+    auto gameObj = se::SeGameObject::createGameObject();
+    gameObj.model = seModel;
+    gameObj.transform.translation = {-.5f, .0f, 2.5f};
+    gameObj.transform.scale = {.5f, .5f, .5f};
 
-    gameObjects.push_back(std::move(cube));
+    gameObjects.push_back(std::move(gameObj));
+
+    seModel = se::SeModel::createModelFromFile(seDevice, "../assets/models/flat_ball.obj");
+
+    gameObj = se::SeGameObject::createGameObject();
+    gameObj.model = seModel;
+    gameObj.transform.translation = {.5f, .0f, 2.5f};
+    gameObj.transform.scale = {.5f, .5f, .5f};
+
+    gameObjects.push_back(std::move(gameObj));
 }
