@@ -122,6 +122,44 @@ std::unique_ptr<SeModel> SeModel::createModelFromFile(SeDevice& device, const st
     return std::make_unique<SeModel>(device, builder);
 }
 
+std::unique_ptr<SeModel> SeModel::createQuad(SeDevice& device, float sideLength, glm::vec3 color) {
+    Builder builder{};
+    float half = sideLength / 2.f;
+    builder.vertices = {
+        {{0.f - half, 0.f - half, 0.f}, color, {}, {}},
+        {{0.f + half, 0.f - half, 0.f}, color, {}, {}},
+        {{0.f + half, 0.f + half, 0.f}, color, {}, {}},
+        {{0.f - half, 0.f + half, 0.f}, color, {}, {}},
+    };
+
+    builder.indices = {0, 1, 2, 0, 2, 3};
+
+    return std::make_unique<SeModel>(device, builder);
+}
+
+std::unique_ptr<SeModel> SeModel::createCircle(SeDevice& device, float radius, glm::vec3 color, int sideCount) {
+    Builder builder{};
+
+    if (sideCount < 4) sideCount = 4;
+
+    builder.vertices.push_back({{0.f, 0.f, 0.f}, color, {}, {}});
+
+    for (int i = 0; i < sideCount; i++) {
+        float x = radius * glm::sin((glm::two_pi<float>() / sideCount) * i);
+        float y = radius * -glm::cos((glm::two_pi<float>() / sideCount) * i);
+
+        builder.vertices.push_back( {{x, y ,0.f},color, {}, {}});
+    }
+
+    for (int i = 0; i < sideCount; i++) {
+        builder.indices.push_back(0);
+        builder.indices.push_back(i + 1);
+        builder.indices.push_back(i + 2 <= sideCount ? i + 2 : 1);
+    }
+
+    return std::make_unique<SeModel>(device, builder);
+}
+
 void SeModel::bind(VkCommandBuffer commandBuffer) {
     VkBuffer buffers[] = {vertexBuffer};
     VkDeviceSize offsets[] = {0};

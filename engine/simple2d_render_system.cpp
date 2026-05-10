@@ -1,0 +1,83 @@
+#include "simple2d_render_system.h"
+
+// libs
+#define GLM_FORCE_RADIANS
+#define GLM_FORCE_DEPTH_ZERO_TO_ONE
+#include <glm/glm.hpp>
+#include <glm/gtc/constants.hpp>
+
+// std
+#include <stdexcept>
+#include <iostream>
+#include <array>
+
+namespace se {
+struct Simple2dPushConstantData {
+    glm::mat4 transform{1.f};
+    glm::mat4 modelMatrix{1.f};
+};
+
+Simple2dRenderSystem::Simple2dRenderSystem(SeDevice& device, VkRenderPass renderPass) : seDevice{device} {
+    createPipelineLayout();
+    createPipeline(renderPass);
+}
+
+Simple2dRenderSystem::~Simple2dRenderSystem() {
+    vkDestroyPipelineLayout(seDevice.device(), pipelineLayout, nullptr);
+}
+
+void Simple2dRenderSystem::createPipelineLayout() {
+    VkPushConstantRange pushConstantRange{};
+    pushConstantRange.stageFlags = VK_SHADER_STAGE_VERTEX_BIT  | VK_SHADER_STAGE_FRAGMENT_BIT;
+    pushConstantRange.offset = 0;
+    pushConstantRange.size = sizeof(Simple2dPushConstantData);
+
+    VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
+    pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+    pipelineLayoutInfo.setLayoutCount = 0;
+    pipelineLayoutInfo.pSetLayouts = nullptr;
+    pipelineLayoutInfo.pushConstantRangeCount = 1;
+    pipelineLayoutInfo.pPushConstantRanges = &pushConstantRange;
+    if (vkCreatePipelineLayout(seDevice.device(), &pipelineLayoutInfo, nullptr, &pipelineLayout) != VK_SUCCESS) {
+        throw std::runtime_error("Failed to create pipeline layout!");
+    }
+}
+
+void Simple2dRenderSystem::createPipeline(VkRenderPass renderPass) {
+    assert(pipelineLayout != nullptr && "Cannot create pipeline before pipeline layout!");
+
+    PipelineConfigInfo pipelineConfig{};
+    SePipeline::defaultPipelineConfigInfo(pipelineConfig);
+    pipelineConfig.renderPass = renderPass;
+    pipelineConfig.pipelineLayout = pipelineLayout;
+    sePipeline = std::make_unique<SePipeline>(
+        seDevice,
+        "../shaders/simple2d_shader.vert.spv",
+        "../shaders/simple2d_shader.frag.spv",
+        pipelineConfig);
+}
+
+void Simple2dRenderSystem::renderGameObjects(VkCommandBuffer commandBuffer, std::vector<SeGameObject>& gameObjects, const SeCamera& camera) {
+
+    sePipeline->bind(commandBuffer);
+
+    auto projectionView = camera.getProjection() * camera.getView();
+
+    for (auto& obj: gameObjects) {
+        Simple2dPushConstantData push{};
+        auto modelMatrix = obj.transform.mat4();
+        push.transform = projectionView * obj.transform.mat4();
+        push.modelMatrix = modelMatrix;
+
+        vkCmdPushConstants(
+            commandBuffer,
+            pipelineLayout,
+            VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
+            0,
+            sizeof(Simple2dPushConstantData),
+            &push);
+        obj.model->bind(commandBuffer);
+        obj.model->draw(commandBuffer);
+    }
+}
+}

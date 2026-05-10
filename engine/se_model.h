@@ -43,6 +43,8 @@ public:
     SeModel& operator= (const SeModel &) = delete;
 
     static std::unique_ptr<SeModel> createModelFromFile(SeDevice& device, const std::string& filePath);
+    static std::unique_ptr<SeModel> createQuad(SeDevice& device, float sideLength, glm::vec3 color);
+    static std::unique_ptr<SeModel> createCircle(SeDevice& device, float radius, glm::vec3 color, int sideCount);
 
     void bind(VkCommandBuffer commandBuffer);
     void draw(VkCommandBuffer commandBuffer);
