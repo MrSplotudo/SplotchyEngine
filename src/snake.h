@@ -41,9 +41,9 @@ private:
     std::vector<se::SeGameObject> fruitParts;
     std::vector<glm::ivec2> fruit;
     glm::ivec2 direction{1, 0};
-    glm::ivec2 moveBuffer1{};
+    glm::ivec2 moveBuffer1{1, 0};
     bool moveBuffer1Used = false;
-    glm::ivec2 moveBuffer2{};
+    glm::ivec2 moveBuffer2{1, 0};
     bool moveBuffer2Used = false;
 
     std::random_device random;

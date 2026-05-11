@@ -58,10 +58,10 @@ void Snake::run() {
         }
 
         if (glfwGetKey(seWindow.getWindow(), GLFW_KEY_W) == GLFW_PRESS && !justPressedUp) {
-            if (!moveBuffer1Used) {
+            if (!moveBuffer1Used && direction.y == 0) {
                 moveBuffer1 = {0, -1};
                 moveBuffer1Used = true;
-            } else if (!moveBuffer2Used) {
+            } else if (!moveBuffer2Used && moveBuffer1Used && moveBuffer1.y == 0) {
                 moveBuffer2 = {0, -1};
                 moveBuffer2Used = true;
             }
@@ -70,10 +70,10 @@ void Snake::run() {
             justPressedUp = false;
         }
         if (glfwGetKey(seWindow.getWindow(), GLFW_KEY_S) == GLFW_PRESS && !justPressedDown) {
-            if (!moveBuffer1Used) {
+            if (!moveBuffer1Used && direction.y == 0) {
                 moveBuffer1 = {0, 1};
                 moveBuffer1Used = true;
-            } else if (!moveBuffer2Used) {
+            } else if (!moveBuffer2Used && moveBuffer1Used && moveBuffer1.y == 0) {
                 moveBuffer2 = {0, 1};
                 moveBuffer2Used = true;
             }
@@ -82,10 +82,10 @@ void Snake::run() {
             justPressedDown = false;
         }
         if (glfwGetKey(seWindow.getWindow(), GLFW_KEY_D) == GLFW_PRESS && !justPressedRight) {
-            if (!moveBuffer1Used) {
+            if (!moveBuffer1Used && direction.x == 0) {
                 moveBuffer1 = {1, 0};
                 moveBuffer1Used = true;
-            } else if (!moveBuffer2Used) {
+            } else if (!moveBuffer2Used && moveBuffer1Used && moveBuffer1.x == 0) {
                 moveBuffer2 = {1, 0};
                 moveBuffer2Used = true;
             }
@@ -94,10 +94,10 @@ void Snake::run() {
             justPressedRight = false;
         }
         if (glfwGetKey(seWindow.getWindow(), GLFW_KEY_A) == GLFW_PRESS && !justPressedLeft) {
-            if (!moveBuffer1Used) {
+            if (!moveBuffer1Used && direction.x == 0) {
                 moveBuffer1 = {-1, 0};
                 moveBuffer1Used = true;
-            } else if (!moveBuffer2Used) {
+            } else if (!moveBuffer2Used && moveBuffer1Used && moveBuffer1.x == 0) {
                 moveBuffer2 = {-1, 0};
                 moveBuffer2Used = true;
             }
