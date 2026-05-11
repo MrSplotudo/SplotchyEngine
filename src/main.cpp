@@ -11,6 +11,7 @@ int main() {
 
 
     try {
+        // Change the app class to be any of: "FirstApp", "PingPong", "Snake"
         Snake app{};
         app.run();
     } catch (std::exception& e) {

@@ -15,6 +15,7 @@
 #include <chrono>
 #include <random>
 #include <algorithm>
+#include <iostream>
 
 Snake::Snake() {
     loadGameObjects();
@@ -57,25 +58,49 @@ void Snake::run() {
         }
 
         if (glfwGetKey(seWindow.getWindow(), GLFW_KEY_W) == GLFW_PRESS && !justPressedUp) {
-            direction = {0, -1};
+            if (!moveBuffer1Used) {
+                moveBuffer1 = {0, -1};
+                moveBuffer1Used = true;
+            } else if (!moveBuffer2Used) {
+                moveBuffer2 = {0, -1};
+                moveBuffer2Used = true;
+            }
             justPressedUp = true;
         } else if (glfwGetKey(seWindow.getWindow(), GLFW_KEY_W) == GLFW_RELEASE) {
             justPressedUp = false;
         }
         if (glfwGetKey(seWindow.getWindow(), GLFW_KEY_S) == GLFW_PRESS && !justPressedDown) {
-            direction = {0, 1};
+            if (!moveBuffer1Used) {
+                moveBuffer1 = {0, 1};
+                moveBuffer1Used = true;
+            } else if (!moveBuffer2Used) {
+                moveBuffer2 = {0, 1};
+                moveBuffer2Used = true;
+            }
             justPressedDown = true;
         } else if (glfwGetKey(seWindow.getWindow(), GLFW_KEY_S) == GLFW_RELEASE) {
             justPressedDown = false;
         }
         if (glfwGetKey(seWindow.getWindow(), GLFW_KEY_D) == GLFW_PRESS && !justPressedRight) {
-            direction = {1, 0};
+            if (!moveBuffer1Used) {
+                moveBuffer1 = {1, 0};
+                moveBuffer1Used = true;
+            } else if (!moveBuffer2Used) {
+                moveBuffer2 = {1, 0};
+                moveBuffer2Used = true;
+            }
             justPressedRight = true;
         } else if (glfwGetKey(seWindow.getWindow(), GLFW_KEY_D) == GLFW_RELEASE) {
             justPressedRight = false;
         }
         if (glfwGetKey(seWindow.getWindow(), GLFW_KEY_A) == GLFW_PRESS && !justPressedLeft) {
-            direction = {-1, 0};
+            if (!moveBuffer1Used) {
+                moveBuffer1 = {-1, 0};
+                moveBuffer1Used = true;
+            } else if (!moveBuffer2Used) {
+                moveBuffer2 = {-1, 0};
+                moveBuffer2Used = true;
+            }
             justPressedLeft = true;
         } else if (glfwGetKey(seWindow.getWindow(), GLFW_KEY_A) == GLFW_RELEASE) {
             justPressedLeft = false;
@@ -97,22 +122,27 @@ void Snake::run() {
 
 void Snake::loadGameObjects() {
     auto gameObj = se::SeGameObject::createGameObject();
-    seModel = se::SeModel::createQuad(seDevice, cellSize, glm::vec3{1.f, 0.f, 0.f});
 
+    // Initial snake head spawn
+    seModel = se::SeModel::createQuad(seDevice, cellSize, glm::vec3{0.05f, 1.f, 0.f});
     snake.push_front({boardSize/ 2, boardSize/2});
     gameObj.model = seModel;
     gameObj.transform.translation = glm::vec3(boardSize / 2, boardSize / 2, -0.1f);
-    gameObj.transform.scale = glm::vec3(.9f);
+    gameObj.transform.scale = glm::vec3(.8f);
     gameObj.color = glm::vec3(1.f, 0.f, 0.f);
     snakeParts.push_back(std::move(gameObj));
 
-    fruit.push_back({boardSize/ 2, boardSize/2});
-    seModel = se::SeModel::createCircle(seDevice, cellSize / 2, glm::vec3(0.f, 1.f, 0.f), 13);
+    // Initial fruit spawn
+    std::uniform_int_distribution fruitDist(0, boardSize - 1);
+
+    fruit.push_back({fruitDist(gen), fruitDist(gen)});
+    seModel = se::SeModel::createCircle(seDevice, cellSize / 2, glm::vec3(1.f, 0.f, 0.05f), 13);
     gameObj.model = seModel;
     gameObj.transform.scale = glm::vec3(.75);
-    gameObj.transform.translation = glm::vec3(0.f, 0.f, -0.05f);
+    gameObj.transform.translation = glm::vec3(fruit[0].x * cellSize - boardWidth / 2,  fruit[0].y * cellSize - boardWidth / 2, -0.05f);
     fruitParts.push_back(std::move(gameObj));
 
+    // Board grid
     seModel = se::SeModel::createQuad(seDevice, cellSize, glm::vec3{0.f, 0.f, 1.f});
     for (int i = 0; i < boardSize; i++) {
         for (int j = 0; j < boardSize; j++) {
@@ -128,14 +158,46 @@ void Snake::loadGameObjects() {
 }
 
 void Snake::step() {
+    if (moveBuffer1Used) {
+        direction = moveBuffer1;
+        if (!moveBuffer2Used) {
+            moveBuffer1Used = false;
+        }
+        moveBuffer1 = moveBuffer2;
+        moveBuffer2Used = false;
+    }
+
+
     glm::ivec2 newHead = snake.front() + direction;
+
+    // snake collision check
+    if (newHead.x > boardSize - 1 || newHead.x < 0 || newHead.y > boardSize - 1 || newHead.y < 0 ||
+        std::find(snake.begin(), snake.end(), newHead) != snake.end()) {
+        vkDeviceWaitIdle(seDevice.device());
+        snake.clear();
+        snakeParts.clear();
+
+        // New initial snake head
+        auto gameObj = se::SeGameObject::createGameObject();
+        seModel = se::SeModel::createQuad(seDevice, cellSize, glm::vec3{0.05f, 1.f, 0.f});
+        snake.push_front({boardSize/ 2, boardSize/2});
+        gameObj.model = seModel;
+        gameObj.transform.translation = glm::vec3(snake.front().x, snake.front().y, -0.1f);
+        gameObj.transform.scale = glm::vec3(.8f);
+        gameObj.color = glm::vec3(1.f, 0.f, 0.f);
+        snakeParts.push_back(std::move(gameObj));
+
+        return;
+    }
+
     snake.push_front(newHead);
 
+    // Head on fruit check
     if (std::find(fruit.begin(), fruit.end(), newHead) != fruit.end()) {
         auto gameObj = se::SeGameObject::createGameObject();
-        seModel = se::SeModel::createQuad(seDevice, cellSize, glm::vec3{1.f - 1.f / (boardSize*boardSize) * snake.size(), 0.f, 0.f});
+        seModel = se::SeModel::createQuad(seDevice, cellSize, glm::vec3{0.05, 1.f - 1.f / (boardSize*boardSize) * snake.size(), 0.f});
         gameObj.model = seModel;
-        gameObj.transform.scale = glm::vec3(.75);
+        gameObj.transform.scale = glm::vec3(.65);
         gameObj.transform.translation = glm::vec3(0.f, 0.f, -0.1f);
         snakeParts.push_back(std::move(gameObj));
 
@@ -144,6 +206,7 @@ void Snake::step() {
         snake.pop_back();
     }
 
+    // Sync deque to snake parts
     for (int i = 0; i < snake.size(); i++) {
         snakeParts[i].transform.translation.x = snake[i].x * cellSize - boardWidth / 2;
         snakeParts[i].transform.translation.y = snake[i].y * cellSize - boardWidth / 2;
@@ -151,8 +214,8 @@ void Snake::step() {
 }
 
 void Snake::spawnFruit() {
-    std::mt19937 gen(random());
-    std::uniform_int_distribution<int> fruitDist(0, boardSize - 1);
+
+    std::uniform_int_distribution fruitDist(0, boardSize - 1);
 
     fruit.pop_back();
 
@@ -166,7 +229,7 @@ void Snake::spawnFruit() {
     fruitParts.pop_back();
 
     auto gameObj = se::SeGameObject::createGameObject();
-    seModel = se::SeModel::createCircle(seDevice, cellSize / 2, glm::vec3(0.f, 1.f, 0.f), 13);
+    seModel = se::SeModel::createCircle(seDevice, cellSize / 2, glm::vec3(1.f, 0.f, 0.05f), 13);
     gameObj.model = seModel;
     gameObj.transform.scale = glm::vec3(.75);
     gameObj.transform.translation = glm::vec3(0.f, 0.f, -0.05f);

@@ -41,8 +41,13 @@ private:
     std::vector<se::SeGameObject> fruitParts;
     std::vector<glm::ivec2> fruit;
     glm::ivec2 direction{1, 0};
+    glm::ivec2 moveBuffer1{};
+    bool moveBuffer1Used = false;
+    glm::ivec2 moveBuffer2{};
+    bool moveBuffer2Used = false;
 
     std::random_device random;
+    std::mt19937 gen{random()};
 
     static constexpr int boardSize = 10;
     float cellSize = .1f;
