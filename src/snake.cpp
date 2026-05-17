@@ -170,6 +170,20 @@ void Snake::step() {
 
     glm::ivec2 newHead = snake.front() + direction;
 
+    // Head on fruit check
+    if (std::find(fruit.begin(), fruit.end(), newHead) != fruit.end()) {
+        auto gameObj = se::SeGameObject::createGameObject();
+        seModel = se::SeModel::createQuad(seDevice, cellSize, glm::vec3{0.05, 1.f - 1.f / (boardSize*boardSize) * snake.size(), 0.f});
+        gameObj.model = seModel;
+        gameObj.transform.scale = glm::vec3(.65);
+        gameObj.transform.translation = glm::vec3(0.f, 0.f, -0.1f);
+        snakeParts.push_back(std::move(gameObj));
+
+        spawnFruit();
+    } else {
+        snake.pop_back();
+    }
+
     // snake collision check
     if (newHead.x > boardSize - 1 || newHead.x < 0 || newHead.y > boardSize - 1 || newHead.y < 0 ||
         std::find(snake.begin(), snake.end(), newHead) != snake.end()) {
@@ -191,20 +205,6 @@ void Snake::step() {
     }
 
     snake.push_front(newHead);
-
-    // Head on fruit check
-    if (std::find(fruit.begin(), fruit.end(), newHead) != fruit.end()) {
-        auto gameObj = se::SeGameObject::createGameObject();
-        seModel = se::SeModel::createQuad(seDevice, cellSize, glm::vec3{0.05, 1.f - 1.f / (boardSize*boardSize) * snake.size(), 0.f});
-        gameObj.model = seModel;
-        gameObj.transform.scale = glm::vec3(.65);
-        gameObj.transform.translation = glm::vec3(0.f, 0.f, -0.1f);
-        snakeParts.push_back(std::move(gameObj));
-
-        spawnFruit();
-    } else {
-        snake.pop_back();
-    }
 
     // Sync deque to snake parts
     for (int i = 0; i < snake.size(); i++) {

@@ -52,8 +52,8 @@ void Simple2dRenderSystem::createPipeline(VkRenderPass renderPass) {
     pipelineConfig.pipelineLayout = pipelineLayout;
     sePipeline = std::make_unique<SePipeline>(
         seDevice,
-        "../shaders/simple2d_shader.vert.spv",
-        "../shaders/simple2d_shader.frag.spv",
+        PROJECT_ROOT "/shaders/simple2d_shader.vert.spv",
+        PROJECT_ROOT "/shaders/simple2d_shader.frag.spv",
         pipelineConfig);
 }
 

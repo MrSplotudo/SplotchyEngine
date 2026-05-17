@@ -65,7 +65,7 @@ void FirstApp::run() {
 }
 
 void FirstApp::loadGameObjects() {
-    std::shared_ptr<se::SeModel> seModel = se::SeModel::createModelFromFile(seDevice, "../assets/models/smooth_ball.obj");
+    std::shared_ptr<se::SeModel> seModel = se::SeModel::createModelFromFile(seDevice, PROJECT_ROOT"/assets/models/smooth_ball.obj");
 
     auto gameObj = se::SeGameObject::createGameObject();
     gameObj.model = seModel;
@@ -74,7 +74,7 @@ void FirstApp::loadGameObjects() {
 
     gameObjects.push_back(std::move(gameObj));
 
-    seModel = se::SeModel::createModelFromFile(seDevice, "../assets/models/flat_ball.obj");
+    seModel = se::SeModel::createModelFromFile(seDevice, PROJECT_ROOT "/assets/models/flat_ball.obj");
 
     gameObj = se::SeGameObject::createGameObject();
     gameObj.model = seModel;
